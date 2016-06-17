@@ -211,6 +211,9 @@ public:
   static const Int64 maxInt64;
   /// Maximum unsigned 64 bits int value that can be stored in a Json::Value.
   static const UInt64 maxUInt64;
+
+  /// Specifies the maximum relative difference of two doubles that are considered equal
+  static double epsilon_;
 #endif // defined(JSON_HAS_INT64)
 
 private:

@@ -2,7 +2,6 @@
 // Distributed under MIT license, or public domain if desired and
 // recognized in your jurisdiction.
 // See file LICENSE for detail or copy at http://jsoncpp.sourceforge.net/LICENSE
-
 #if !defined(JSON_IS_AMALGAMATION)
 #include <json/assertions.h>
 #include <json/value.h>
@@ -579,6 +578,27 @@ bool Value::operator>=(const Value& other) const { return !(*this < other); }
 
 bool Value::operator>(const Value& other) const { return other < *this; }
 
+double Value::epsilon_ = 1e-100;
+
+/**
+ * based on "Comparison" by floating-point-gui.de licensed under CC BY 3.0 adapted to C++
+ */
+static bool nearlyEqual(double a, double b, double epsilon) {
+  double absA = std::abs(a);
+  double absB = std::abs(b);
+  double diff = std::abs(a - b);
+
+  if (a == b) { // shortcut, handles infinities
+    return true;
+  } else if (a == 0 || b == 0 || diff < std::numeric_limits<double>::min()) {
+    // a or b is zero or both are extremely close to it
+    // relative error is less meaningful here
+    return diff < (epsilon * std::numeric_limits<double>::min());
+  } else { // use relative error
+    return diff / std::min((absA + absB), std::numeric_limits<double>::max()) < epsilon;
+  }
+}
+
 bool Value::operator==(const Value& other) const {
   // if ( type_ != other.type_ )
   // GCC 2.95.3 says:
@@ -595,7 +615,7 @@ bool Value::operator==(const Value& other) const {
   case uintValue:
     return value_.uint_ == other.value_.uint_;
   case realValue:
-    return value_.real_ == other.value_.real_;
+    return nearlyEqual(value_.real_, other.value_.real_, epsilon_);
   case booleanValue:
     return value_.bool_ == other.value_.bool_;
   case stringValue:
